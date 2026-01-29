@@ -1,6 +1,7 @@
 package com.cmci.common.service;
 
 import com.cmci.home.mapper.HomeMapper;
+import com.cmci.home.model.HomeDto;
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
@@ -8,13 +9,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.test.context.ContextConfiguration;
 
 import java.sql.*;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Service(value="com.cmci.common.service")
-@ContextConfiguration(locations = {"file:src/main/webapp/WEB-INF/spring-config/applicationContext.xml"})
 public class CommonService {
 
     @Autowired
@@ -61,10 +58,65 @@ public class CommonService {
         return rMap;
     }
 
+    public <T> T selectOne(String queryId, Object param) {
+        return sqlSession.selectOne(queryId, param);
+    }
+
+    public <E> List<E> selectList(String queryId, Object param) {
+        return sqlSession.selectList(queryId, param);
+    }
+
+    public int insert(String queryId, Object param) {
+        return sqlSession.insert(queryId, param);
+    }
+
+    public int insert(String queryId, List<Object> paramList) {
+        int cnt = 0;
+        for(Object obj : paramList) {
+            cnt += sqlSession.insert(queryId, obj);
+        }
+        return cnt;
+    }
+
+    public int update(String queryId, Object param) {
+        return sqlSession.update(queryId, param);
+    }
+
+    public int update(String queryId, List<Object> paramList) {
+        int cnt = 0;
+        for(Object obj : paramList) {
+            cnt += sqlSession.update(queryId, obj);
+        }
+        return cnt;
+    }
+
+    public int delete(String queryId, Object param) {
+        return sqlSession.delete(queryId, param);
+    }
+
+    public int delete(String queryId, List<Object> paramList) {
+        int cnt = 0;
+        for(Object obj : paramList) {
+            cnt += sqlSession.delete(queryId, obj);
+        }
+        return cnt;
+    }
+
     public Map<String, Object> getMyBatisObject(String userIdParam) {
+        Map<String, String> pMap = new HashMap<String, String>();
+        pMap.put("id", userIdParam);
+        return (Map<String, Object>)sqlSession.selectOne("home.selectUserMap", pMap);
+    }
+
+    public HomeDto getMyBatisDto(String userIdParam) {
+        Map<String, String> pMap = new HashMap<String, String>();
+        pMap.put("id", userIdParam);
+        return sqlSession.selectOne("home.selectUserDto", userIdParam);
+        /*
         HomeMapper mapper = sqlSession.getMapper(HomeMapper.class);
         Map<String, Object> rMap = mapper.selectUserInfo(userIdParam);
         return rMap;
+        */
     }
 
     public Map<String, Object> getTestObject(String userIdParam) {
