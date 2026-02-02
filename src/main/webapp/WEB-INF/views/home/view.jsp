@@ -49,6 +49,7 @@
         </tr>
     </table>
 </div>
+<div id="pptExportDiv"></div>
 <button id="pythonBtn">Python 결과</button>
 <div id="pythonResult"></div>
 <br>
@@ -84,8 +85,12 @@
             data: formData,
             processData: false, // Prevent jQuery from processing data [1]
             contentType: false, // Prevent jQuery from setting content type [1]
-            success: function(response) {
-                alert('File uploaded successfully!');
+            success: function(json) {
+                if(json.exportResult=="success") {
+                    $("#pptExportDiv").html("<textarea style=\'width:100%; height:200px;\'>"+json.pptTxt+"</textarea>");
+                } else {
+                    alert("Export Fail : "+json.exportResultMessage);
+                }
             },
             error: function(e) {
                 alert('Upload failed.');

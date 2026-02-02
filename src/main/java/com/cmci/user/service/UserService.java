@@ -13,16 +13,24 @@ public class UserService extends CommonService {
     public UserDto getUserInfo(String pUserId) {
         Map<String, String> pMap = new HashMap<>();
         pMap.put("id", pUserId);
-        return (UserDto)this.selectOne("user.selectUserDto", pMap);
+        return selectUserInfo(pMap);
     }
 
     public UserDto getUserInfo(UserDto pDto) {
         Map<String, String> pMap = new HashMap<>();
         pMap.put("id", pDto.getUserId());
-        return (UserDto)this.selectOne("user.selectUserDto", pMap);
+        return selectUserInfo(pMap);
     }
 
     public int addUserInfo(UserDto userDto) {
+        return insertUserInfo(userDto);
+    }
+
+    private UserDto selectUserInfo(Map<String, String> pMap) {
+        return (UserDto) this.selectOne("user.selectUserDto", pMap);
+    }
+
+    private int insertUserInfo(UserDto userDto) {
         return (int)this.insert("user.insertUserInfo", userDto);
     }
 }

@@ -52,13 +52,18 @@ public class UserController {
     }
 
     @RequestMapping("/exportPpt")
-    public String exportPpt(MultipartHttpServletRequest pReq) {
+    @ResponseBody
+    public UserDto exportPpt(MultipartHttpServletRequest pReq) {
         MultipartFile pptFile = pReq.getFile("pptTarget");
     //public String exportPpt(MultipartFile pptFile) {
+        UserDto rDto = new UserDto();
         if(pptFile.isEmpty()) {
-            return "FILE_EMPTY";
+            rDto.setExportResult("fail");
+            rDto.setExportResultMessage("FILE_EMPTY");
+            return rDto;
         }
-        excelService.exportPptFile(pptFile);
-        return pptFile.getName();
+        rDto.setExportResult("success");
+        rDto.setPptTxt(excelService.exportPptFile(pptFile));
+        return rDto;
     }
 }
