@@ -4,11 +4,9 @@
 <html>
 <head>
     <title>Vis.js Graph</title>
-    <script src="https://unpkg.com/vis-timeline@latest/standalone/umd/vis-timeline-graph2d.min.js"
-            type="text/javascript"></script>
-    <link href="https://unpkg.com/vis-timeline@latest/styles/vis-timeline-graph2d.min.css" rel="stylesheet"
-          type="text/css"/>
-    <script type="module" src="<c:url value='/js/arrow.js' />"></script>
+    <script src="<c:url value="/resources/js/vis/vis-timeline-graph2d.min.js"/>" type="text/javascript"></script>
+    <link href="<c:url value="/resources/css/vis/vis-timeline-graph2d.min.css"/>" rel="stylesheet" type="text/css"/>
+    <script type="module" src="<c:url value='/resources/js/vis/arrow.js' />"></script>
     <style>
         body { font-family: Arial; margin: 20px; }
         #timeline { width: 100%; height: 500px; border: 1px solid lightgray; }

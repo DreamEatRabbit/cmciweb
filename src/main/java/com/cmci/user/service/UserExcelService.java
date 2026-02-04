@@ -1,11 +1,11 @@
 package com.cmci.user.service;
 
 import com.cmci.user.constants.UserExcelConstants;
+import org.apache.poi.sl.usermodel.PictureData;
+import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.util.IOUtils;
 import org.apache.poi.xslf.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFRow;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xssf.usermodel.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -69,57 +69,141 @@ public class UserExcelService {
             // 데이터 추출 또는 수정 로직
             // 1. 일단 텍스트 박스 및 도형 내 텍스트
             for(XSLFShape shape : slide.getShapes()) {
-                if(shape instanceof XSLFTextShape) {
-                    XSLFTextShape textShape = (XSLFTextShape) shape;
-                    //System.out.println("Text : " + textShape.getText());
-                    sb.append(textShape.getText() == null ? "" : String.valueOf(textShape.getText())).append("\n");
-                }
-                else if(shape instanceof XSLFTable) {
-                    XSLFTable tb = (XSLFTable) shape;
-                    //System.out.println("Table Rows : "+tb.getRows().size());
-                    for(XSLFTableRow row : tb.getRows()) {
-                        for(XSLFTableCell cell : row.getCells()) {
-                            //System.out.print(cell.getText()+"\t");
-                            sb.append(cell.getText() == null ? "" : String.valueOf(cell.getText())).append("\t");
-                        }
-                    }
-                    //System.out.println();
-                    sb.append("\n");
-                }
+                exportShape(shape, sb);
             }
         }
 
         return sb.toString();
     }
 
-    private XSSFWorkbook exportPptToExcel(XMLSlideShow ppt) {
-        XSSFWorkbook wb = new XSSFWorkbook();
-        XSSFSheet sheet = wb.createSheet("PPT Slide To Excel");
-        List<XSLFSlide> slides = ppt.getSlides();
-        int rowNum = 0;
-        for (XSLFSlide slide : slides) {
-            for (XSLFShape shape : slide.getShapes()) {
-                if (shape instanceof XSLFTextShape) {
-                    XSLFTextShape textShape = (XSLFTextShape) shape;
-                    String text = textShape.getText();
+    private void exportShape(XSLFShape shape, StringBuffer sb) {
+        if(shape!=null) {
+            if (shape instanceof XSLFTextShape) {
+                XSLFTextShape textShape = (XSLFTextShape) shape;
+                //System.out.println("Text : " + textShape.getText());
+                sb.append("TXT : ").append(textShape.getText() == null ? "" : String.valueOf(textShape.getText())).append("\n");
+            } else if (shape instanceof XSLFTable) {
+                XSLFTable tb = (XSLFTable) shape;
+                //System.out.println("Table Rows : "+tb.getRows().size());
+                for (XSLFTableRow row : tb.getRows()) {
+                    int tdPos = 0;
+                    for (XSLFTableCell cell : row.getCells()) {
+                        //System.out.print(cell.getText()+"\t");
+                        if(tdPos==0)
+                            sb.append("TB : ");
 
-                    // 3. 엑셀에 데이터 쓰기
-                    XSSFRow row = sheet.createRow(rowNum++);
-                    row.createCell(0).setCellValue(text);
-                }
-                else if(shape instanceof XSLFTable) {
-                    XSLFTable tbShape = (XSLFTable) shape;
-                    for(XSLFTableRow tr : tbShape.getRows()) {
-                        XSSFRow row = sheet.createRow(rowNum++);
-                        int tcIdx = 0;
-                        for(XSLFTableCell tc : tr.getCells()) {
-                            row.createCell(tcIdx++).setCellValue(tc.getText());
-                        }
+                        sb.append(cell.getText() == null ? "" : String.valueOf(cell.getText())).append("\t");
+                        tdPos++;
                     }
+                }
+                //System.out.println();
+                sb.append("\n");
+            } else if (shape instanceof XSLFGroupShape) {
+                XSLFGroupShape gs = (XSLFGroupShape) shape;
+                List<XSLFShape> gsList = gs.getShapes();
+                for(XSLFShape subShape : gsList) {
+                    exportShape(subShape, sb);
                 }
             }
         }
+    }
 
+    private XSSFWorkbook exportPptToExcel(XMLSlideShow ppt) {
+        XSSFWorkbook wb = new XSSFWorkbook();
+        XSSFSheet sheet = wb.createSheet("PPT Slide To Excel");
+        //sheet.setDefaultColumnWidth(1000);
+
+        XSSFCellStyle cs = wb.createCellStyle();
+        cs.setWrapText(true);
+
+        List<XSLFSlide> slides = ppt.getSlides();
+        int rowNum = 0;
+        int pageIdx = 1;
+        for (XSLFSlide slide : slides) {
+
+            XSSFRow row = sheet.createRow(rowNum++);
+            row.createCell(0).setCellValue("Page : "+pageIdx);
+            row.getCell(0).setCellStyle(cs);
+
+            for (XSLFShape shape : slide.getShapes()) {
+                rowNum = transShape(shape, sheet, cs, rowNum++);
+            }
+            pageIdx++;
+        }
+
+        sheet.autoSizeColumn(0);
         return wb;
+    }
+
+    private int transShape(XSLFShape shape, XSSFSheet sheet, XSSFCellStyle cs, int rowNum) {
+        if (shape instanceof XSLFTextShape) {
+            XSLFTextShape textShape = (XSLFTextShape) shape;
+            //String text = textShape.getText();
+            String text = textShape.getText() == null ? "" : String.valueOf(textShape.getText().trim());
+
+            if(!"".equals(text)) {
+                XSSFRow row = sheet.createRow(rowNum++);
+                row.createCell(0).setCellValue(text);
+                row.getCell(0).setCellStyle(cs);
+            }
+        }
+        else if(shape instanceof XSLFTable) {
+            XSLFTable tbShape = (XSLFTable) shape;
+            for(XSLFTableRow tr : tbShape.getRows()) {
+                XSSFRow row = sheet.createRow(rowNum++);
+                int tcIdx = 0;
+                for(XSLFTableCell tc : tr.getCells()) {
+                    String text = tc.getText() == null ? "" : String.valueOf(tc.getText().trim());
+                    row.createCell(tcIdx++).setCellValue(tc.getText());
+                }
+            }
+        }
+        else if (shape instanceof XSLFPictureShape) {
+            /*
+            XSLFPictureData picData = ((XSLFPictureShape) shape).getPictureData();
+            XSSFWorkbook wb = sheet.getWorkbook();
+            int picType = 0;
+            if(picData.getType().name().equals("PNG")) picType = XSSFWorkbook.PICTURE_TYPE_PNG;
+            else if(picData.getType().name().equals("JPEG")) picType = XSSFWorkbook.PICTURE_TYPE_JPEG;
+            else if(picData.getType().name().equals("EMF")) picType = XSSFWorkbook.PICTURE_TYPE_EMF;
+
+            int picIdx = wb.addPicture(picData.getData(), picType);
+            XSSFCreationHelper helper = wb.getCreationHelper();
+            XSSFDrawing drawing = sheet.createDrawingPatriarch();
+            XSSFClientAnchor anchor = helper.createClientAnchor();
+
+            anchor.setCol1(0);
+            anchor.setRow1(rowNum++);
+            drawing.createPicture(anchor, picIdx).resize();
+            */
+            /*
+            XSLFPictureData picData = ((XSLFPictureShape) shape).getPictureData();
+            XSSFRow row = sheet.createRow(rowNum++);
+            row.createCell(0).setCellValue("Image : "+picData.getFileName());
+            row.getCell(0).setCellStyle(cs);
+            */
+        }
+        else if (shape instanceof  XSLFConnectorShape) {
+            /*
+            XSLFConnectorShape conn = (XSLFConnectorShape) shape;
+            XSSFRow row = sheet.createRow(rowNum++);
+            row.createCell(0).setCellValue("Connector : "+conn.getShapeName());
+            row.getCell(0).setCellStyle(cs);
+            */
+        }
+        else if (shape instanceof XSLFGroupShape) {
+            XSLFGroupShape gs = (XSLFGroupShape) shape;
+            List<XSLFShape> gsList = gs.getShapes();
+            for(XSLFShape subShape : gsList) {
+                rowNum = transShape(subShape, sheet, cs, rowNum++);
+            }
+        }
+        else {
+            /*
+            XSSFRow row = sheet.createRow(rowNum++);
+            row.createCell(0).setCellValue("지원하지 않는 Shape : "+shape.getShapeName());
+            */
+        }
+        return rowNum;
     }
 }

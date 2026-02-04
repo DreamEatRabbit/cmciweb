@@ -7,9 +7,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
 @RequestMapping("/timeline")
-public class timelineController {
+public class TimelineController {
 
-    @RequestMapping("/")
+    @RequestMapping("/view")
     public String timeline(Model model) {
         return "/timeline/timelineTest";
     }
