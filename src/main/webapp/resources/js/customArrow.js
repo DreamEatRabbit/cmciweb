@@ -5,8 +5,8 @@
             color: '#999',
             strokeWidth: 2,
             arrowSize: 6,
-            offset: 12,
-            detour: 8
+            offset: 14,
+            detour: 12
         }, globalOptions);
 
         const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -18,12 +18,6 @@
         svg.style.pointerEvents = "none";
         timeline.dom.center.appendChild(svg);
 
-        // arrowhead 정의
-        const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
-        defs.appendChild(createArrowMarker("arrow_start", "start", options));
-        defs.appendChild(createArrowMarker("arrow_end", "end", options));
-        svg.appendChild(defs);
-
         const connections = []; // redraw 대상
 
         itemsData.forEach(item => {
@@ -33,26 +27,59 @@
                 const depId = typeof dep === 'object' ? dep.id : dep;
                 const depOptions = typeof dep === 'object' ? dep : {};
 
-                const fromItem = items.get(item.id);
-                const toItem = items.get(Number(depId));
-
-                if (!toItem) return;
-
-                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                path.style.fill = "none";
-                applyPathStyle(path, Object.assign({}, options, depOptions));
-                applyArrowDirection(path, depOptions.direction);
-
-                svg.appendChild(path);
-
-                connections.push({
-                    fromItem,
-                    toItem,
-                    path,
-                    options: depOptions
-                });
+                addDependency(item.id, Number(depId), Object.assign({}, options, depOptions));
             });
         });
+
+        function addDependency(fromId, toId, depOptions = {}) {
+            fromId = Number(fromId);
+            toId = Number(toId);
+
+            const fromItem = items.get(fromId);
+            const toItem = items.get(toId);
+            if(!fromItem || !toItem) return;
+
+            // 중복방지
+            if (connections.some(c => c.fromItem.id === fromId && c.toItem.id === toId)) return;
+
+            // arrowhead 정의
+            const arrow_start = "arrow_start" + fromId + "to" + toId;
+            const arrow_end = "arrow_end" + fromId + "to" + toId;
+            const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+            defs.appendChild(createArrowMarker(arrow_start, "start", depOptions));
+            defs.appendChild(createArrowMarker(arrow_end, "end", depOptions));
+            svg.appendChild(defs);
+
+            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            path.style.fill = "none";
+            applyPathStyle(path, depOptions);
+
+            applyArrowDirection(path, depOptions.direction, arrow_start, arrow_end);
+
+            svg.appendChild(path);
+
+            connections.push({
+                fromItem,
+                toItem,
+                path,
+                options: depOptions
+            });
+
+            redraw();
+        }
+
+        function removeDependency(fromId, toId) {
+            fromId = Number(fromId);
+            toId = Number(toId);
+
+            const idx = connections.findIndex(c => c.fromItem.id === fromId && c.toItem.id === toId);
+            if (idx === -1) return;
+
+            svg.removeChild(connections[idx].path);
+            connections.splice(idx, 1);
+
+            redraw();
+        }
 
         function createArrowMarker(id, type = "end", options = {}) {
             const marker = document.createElementNS("http://www.w3.org/2000/svg", "marker");
@@ -94,22 +121,22 @@
             if(options.lineJoin) path.style.strokeLinejoin = options.lineJoin;
         }
 
-        function applyArrowDirection(path, direction = "forward") {
+        function applyArrowDirection(path, direction = "forward", arrow_start, arrow_end) {
             path.removeAttribute("marker-start");
             path.removeAttribute("marker-end");
 
             switch (direction) {
                 case "forward":
-                    path.setAttribute("marker-end", "url(#arrow_end)");
+                    path.setAttribute("marker-end", `url(#${arrow_end})`);
                     break;
 
                 case "backward":
-                    path.setAttribute("marker-start", "url(#arrow_start)");
+                    path.setAttribute("marker-start", `url(#${arrow_start})`);
                     break;
 
                 case "both":
-                    path.setAttribute("marker-start", "url(#arrow_start)");
-                    path.setAttribute("marker-end", "url(#arrow_end)");
+                    path.setAttribute("marker-start", `url(#${arrow_start})`);
+                    path.setAttribute("marker-end", `url(#${arrow_end})`);
                     break;
 
                 default: break;
@@ -207,47 +234,6 @@
 
                 conn.path.setAttribute("d", d);
             });
-        }
-
-        function addDependency(fromId, toId, depOptions = {}) {
-            fromId = Number(fromId);
-            toId = Number(toId);
-
-            const fromItem = items.get(fromId);
-            const toItem = items.get(toId);
-            if(!fromItem || !toItem) return;
-
-            // 중복방지
-            if (connections.some(c => c.fromItem.id === fromId && c.toItem.id === toId)) return;
-
-            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            path.style.fill = "none";
-            applyPathStyle(path, Object.assign({}, options, depOptions));
-            applyArrowDirection(path, depOptions.direction);
-
-            svg.appendChild(path);
-
-            connections.push({
-                fromItem,
-                toItem,
-                path,
-                options: depOptions
-            });
-
-            redraw();
-        }
-
-        function removeDependency(fromId, toId) {
-            fromId = Number(fromId);
-            toId = Number(toId);
-
-            const idx = connections.findIndex(c => c.fromItem.id === fromId && c.toItem.id === toId);
-            if (idx === -1) return;
-
-            svg.removeChild(connections[idx].path);
-            connections.splice(idx, 1);
-
-            redraw();
         }
 
         timeline.on('changed', redraw);
