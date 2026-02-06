@@ -6,15 +6,17 @@
   To change this template use File | Settings | File Templates.
 --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+
 <html>
 <head>
     <title>Title</title>
     <!-- 1. vis-timeline 스타일 및 스크립트 로드 -->
-    <link href="https://unpkg.com" rel="stylesheet" type="text/css" />
-    <script src="https://unpkg.com"></script>
+    <script src="<c:url value="/resources/js/vis/vis-timeline-graph2d.min.js"/>" type="text/javascript"></script>
+    <link href="<c:url value="/resources/css/vis/vis-timeline-graph2d.min.css"/>" rel="stylesheet" type="text/css"/>
 
     <!-- 2. vis-timeline-arrows (화살표 확장) 로드 -->
-    <script src="https://unpkg.com"></script>
+    <script type="module" src="<c:url value='/resources/js/vis/arrow.js' />"></script>
 
     <style>
         body { font-family: sans-serif; }

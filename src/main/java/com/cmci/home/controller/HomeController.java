@@ -69,11 +69,6 @@ public class HomeController {
         return mv;
     }
 
-    @RequestMapping("/timeline")
-    public String timeline(Model model) {
-        return "/timeline/timelineTest";
-    }
-
     @RequestMapping("/getPythonResult")
     public ResponseEntity<String> getPythonResult(String type) {
         if("SSIM".equals(type)) {

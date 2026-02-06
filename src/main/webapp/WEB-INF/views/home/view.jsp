@@ -49,12 +49,22 @@
         </tr>
     </table>
 </div>
+<button id="visjsBtn">vis-js</button>
+<button id="frappeBtn">FrappeGantt</button>
+<button id="visjsTimelineBtn">vis-js timeline</button>
 <div id="pptExportDiv"></div>
 <button id="pythonBtn">Python 결과</button>
 <div id="pythonResult"></div>
 <br>
 <button id="pythonRestBtn">Python Rest 결과</button>
 <div id="pythonRestResult"></div>
+<%--
+<div id="layerContainer" style="position:absolute; width=700px; height:500px; top:50px; left:40px; background:#ffffff; margin:auto;">
+    <div id="layerTitle">팝업 Layer</div>
+    <div id="layerContents"></div>
+    <div id="layerClose" style="text-align: right" onclick="$('#layerContainer').fadeOut();">[닫기]</div>
+</div>
+--%>
 <script>
     $("#userAddBtn").on("click", function () {
         if(lfn_chkValidation()) {
@@ -62,6 +72,18 @@
         } else {
             alert("사용자 ID 중복");
         }
+    });
+
+    $("#visjsBtn").on("click", function() {
+        window.open("/webtest/home/visTimeline", "vis-js", "width:400, height:600");
+    });
+
+    $("#frappeBtn").on("click", function() {
+        window.open("/webtest/home/frappeGantt", "frappe", "width:400, height:600");
+    });
+
+    $("#visjsTimelineBtn").on("click", function() {
+        window.open("/webtest/timeline/view", "timeline", "width:400, height:600");
     });
 
     $("#pythonBtn").on("click", function () {
